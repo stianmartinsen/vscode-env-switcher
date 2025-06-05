@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as path from "path";
 
 interface EnvironmentSection {
   name: string;
@@ -10,25 +8,121 @@ interface EnvironmentSection {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  // Register commands
-  let switchToStaging = vscode.commands.registerCommand(
-    "envSwitcher.switchToStaging",
-    () => {
-      switchEnvironment("staging");
+  // Register the single command for changing environment
+  let changeEnvironment = vscode.commands.registerCommand(
+    "envSwitcher.changeEnvironment",
+    async () => {
+      await showEnvironmentPicker();
     }
   );
 
-  let switchToProduction = vscode.commands.registerCommand(
-    "envSwitcher.switchToProduction",
-    () => {
-      switchEnvironment("production");
-    }
-  );
-
-  context.subscriptions.push(switchToStaging, switchToProduction);
+  context.subscriptions.push(changeEnvironment);
 }
 
-async function switchEnvironment(targetEnv: "staging" | "production") {
+async function showEnvironmentPicker() {
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (!document) {
+    vscode.window.showErrorMessage(
+      "No active editor found. Please open an .env file."
+    );
+    return;
+  }
+
+  try {
+    const content = document.getText();
+    const environments = parseEnvironments(content);
+
+    if (environments.length === 0) {
+      vscode.window.showWarningMessage(
+        "No environments found. Use '# env=<name>' syntax to define environments."
+      );
+      return;
+    }
+
+    // Get unique environment names
+    const uniqueEnvNames = Array.from(
+      new Set(environments.map((env) => env.name))
+    );
+
+    // Create quick pick items
+    const items: vscode.QuickPickItem[] = uniqueEnvNames.map((envName) => {
+      const envSections = environments.filter((env) => env.name === envName);
+      const totalLines = envSections.reduce(
+        (sum, section) => sum + (section.endLine - section.startLine),
+        0
+      );
+      return {
+        label: envName,
+        description: `${envSections.length} block(s), ${totalLines} lines`,
+      };
+    });
+
+    // Show the quick pick
+    const selectedItem = await vscode.window.showQuickPick(items, {
+      placeHolder: "Select an environment to switch to",
+      title: "Change Environment",
+    });
+
+    if (selectedItem) {
+      await switchToEnvironment(selectedItem.label, environments);
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(`Error reading environments: ${error}`);
+  }
+}
+
+function parseEnvironments(content: string): EnvironmentSection[] {
+  const lines = content.split("\n");
+  const environments: EnvironmentSection[] = [];
+  let currentEnv: EnvironmentSection | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const envMatch = line.match(/^#\s*.*env\s*=\s*(.+)$/i);
+
+    if (envMatch) {
+      // Save the previous environment if it exists
+      if (currentEnv) {
+        currentEnv.endLine = i - 1;
+        environments.push(currentEnv);
+      }
+
+      // Start a new environment section
+      currentEnv = {
+        name: envMatch[1].trim(),
+        startLine: i,
+        endLine: i,
+        lines: [],
+      };
+    } else if (currentEnv) {
+      // Check if this is a blank line (scope terminator)
+      if (line.trim() === "") {
+        // End the current environment section
+        currentEnv.endLine = i - 1;
+        environments.push(currentEnv);
+        currentEnv = null;
+      } else {
+        // Add line to current environment section
+        currentEnv.lines.push(line);
+
+        // Check if this is the end of file
+        if (i === lines.length - 1) {
+          currentEnv.endLine = i;
+          environments.push(currentEnv);
+          currentEnv = null;
+        }
+      }
+    }
+  }
+
+  return environments;
+}
+
+async function switchToEnvironment(
+  targetEnv: string,
+  environments: EnvironmentSection[]
+) {
   const document = vscode.window.activeTextEditor?.document;
 
   if (!document) {
@@ -37,53 +131,42 @@ async function switchEnvironment(targetEnv: "staging" | "production") {
 
   try {
     const content = document.getText();
+    const lines = content.split("\n");
 
-    let hasChanges = false;
+    // Process each line
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
 
-    let isCommenting = false;
-    let isUncommenting = false;
-
-    let modifiedContent = "";
-
-    for (const line of content.split("\n")) {
-      let newLine = line;
-
-      if (
-        line.startsWith("#") &&
-        (line.toLowerCase().includes(" production") ||
-          line.toLowerCase().includes(" staging"))
-      ) {
-        if (
-          (line.toLowerCase().includes(" production") &&
-            targetEnv === "production") ||
-          (line.toLowerCase().includes(" staging") && targetEnv === "staging")
-        ) {
-          isUncommenting = true;
-        } else if (
-          (line.toLowerCase().includes(" production") &&
-            targetEnv === "staging") ||
-          (line.toLowerCase().includes(" staging") &&
-            targetEnv === "production")
-        ) {
-          isCommenting = true;
-        }
-      } else if (line === "") {
-        isCommenting = false;
-        isUncommenting = false;
-      } else if (isCommenting && line.startsWith("#") === false) {
-        newLine = "#" + line;
-      } else if (isUncommenting && line.startsWith("#") === true) {
-        newLine = line.replace(/^#\s*/, "");
+      // Skip environment header comments
+      if (line.match(/^#\s*.*env\s*=\s*(.+)$/i)) {
+        continue;
       }
 
-      modifiedContent += newLine + "\n";
+      // Find which environment this line belongs to
+      const envSection = environments.find(
+        (env) => i > env.startLine && i <= env.endLine
+      );
+
+      if (envSection) {
+        // This line belongs to an environment section
+        if (envSection.name === targetEnv) {
+          // This is the target environment - uncomment if commented
+          if (line.startsWith("#") && !line.match(/^#\s*.*env\s*=/i)) {
+            lines[i] = line.replace(/^#\s*/, "");
+          }
+        } else {
+          // This is not the target environment - comment if not commented
+          if (!line.startsWith("#") && line.trim() !== "") {
+            lines[i] = "#" + line;
+          }
+        }
+      }
+      // Lines outside environment sections remain unchanged
     }
 
-    modifiedContent = modifiedContent.trim();
+    const modifiedContent = lines.join("\n");
 
-    hasChanges = modifiedContent !== content;
-
-    if (hasChanges) {
+    if (modifiedContent !== content) {
       // Apply changes to the document
       const edit = new vscode.WorkspaceEdit();
       const fullRange = new vscode.Range(0, 0, document.lineCount, 0);
@@ -95,8 +178,8 @@ async function switchEnvironment(targetEnv: "staging" | "production") {
         `Successfully switched to ${targetEnv} environment!`
       );
     } else {
-      vscode.window.showWarningMessage(
-        `No switchable ${targetEnv} configuration found, lol!!!`
+      vscode.window.showInformationMessage(
+        `Environment ${targetEnv} is already active.`
       );
     }
   } catch (error) {

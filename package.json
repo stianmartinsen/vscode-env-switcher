@@ -6,6 +6,9 @@
   "engines": {
     "vscode": "^1.96.2"
   },
+  "author": {
+    "name": "Stian Martinsen"
+  },
   "categories": [
     "Other"
   ],
@@ -14,53 +17,32 @@
   "contributes": {
     "commands": [
       {
-        "command": "envSwitcher.switchToStaging",
-        "title": "Switch to Staging Environment",
-        "category": "Env Switcher"
-      },
-      {
-        "command": "envSwitcher.switchToProduction",
-        "title": "Switch to Production Environment",
+        "command": "envSwitcher.changeEnvironment",
+        "title": "Change Environment",
         "category": "Env Switcher"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "envSwitcher.switchToStaging",
-          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini"
-        },
-        {
-          "command": "envSwitcher.switchToProduction",
-          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini"
+          "command": "envSwitcher.changeEnvironment",
+          "when": "resourceFilename =~ /\\.env/"
         }
       ],
       "editor/context": [
         {
-          "submenu": "envSwitcher.submenu",
-          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini",
+          "command": "envSwitcher.changeEnvironment",
+          "when": "resourceFilename =~ /\\.env/",
           "group": "navigation"
         }
       ]
     },
-    "submenus": [
-      {
-        "id": "envSwitcher.submenu",
-        "label": "Environment Switcher"
-      }
-    ],
     "keybindings": [
       {
-        "command": "envSwitcher.switchToStaging",
-        "key": "ctrl+shift+e s",
-        "mac": "cmd+shift+e s",
-        "when": "editorLangId == dotenv || resourceExtname == .env.local || editorLangId == ini"
-      },
-      {
-        "command": "envSwitcher.switchToProduction",
-        "key": "ctrl+shift+e p",
-        "mac": "cmd+shift+e p",
-        "when": "editorLangId == dotenv || resourceExtname == .env.local || editorLangId == ini"
+        "command": "envSwitcher.changeEnvironment",
+        "key": "alt+ctrl+e",
+        "mac": "alt+cmd+e",
+        "when": "resourceFilename =~ /\\.env/"
       }
     ]
   },

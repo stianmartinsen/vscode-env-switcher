@@ -1,21 +1,24 @@
 # Environment Switcher
 
-**Quickly switch between production and staging environments in your `.env` files with just a few keystrokes!**
+**Quickly switch between multiple environments in your `.env` files with just a few keystrokes!**
 
 ![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.96.2+-green.svg)
 
 ## Features
 
-- 🚀 **One-Click Environment Switching**: Instantly toggle between production and staging configurations
-- ⌨️ **Keyboard Shortcuts**: Quick access with customizable key bindings
-- 📝 **Smart Comment Management**: Automatically comments/uncomments environment-specific sections
+- 🚀 **Dynamic Environment Switching**: Support for unlimited custom environments (staging, production, development, testing, etc.)
+- 🎯 **Smart Environment Detection**: Automatically detects all available environments in your file
+- ⌨️ **Quick Access**: Single keyboard shortcut to access environment picker
+- 📝 **Intelligent Comment Management**: Automatically comments/uncomments environment-specific sections
+- 🔄 **Multiple Blocks**: Support for multiple environment blocks with the same name
+- 🛑 **Scope Boundaries**: Respects blank lines as environment scope terminators
 - 🎯 **Context-Aware**: Works only when editing `.env` files for focused functionality
-- 🔧 **Command Palette Integration**: Access commands through VS Code's command palette
+- 📋 **Interactive Picker**: Visual selection of environments with block and line counts
 
 ## How It Works
 
-The extension works by detecting environment sections in your `.env` files marked with comments like `# production` or `# staging`. It then automatically comments/uncomments the appropriate sections when switching environments.
+The extension detects environment sections in your `.env` files marked with comments using the `# env=<name>` syntax. It automatically comments/uncomments the appropriate sections when switching environments, while preserving shared variables and respecting scope boundaries.
 
 ### Example `.env` file structure:
 
@@ -24,15 +27,33 @@ The extension works by detecting environment sections in your `.env` files marke
 DATABASE_URL=postgres://localhost:5432/myapp
 API_VERSION=v1
 
-# production
+# env=production
 API_URL=https://api.production.com
 DEBUG=false
 LOG_LEVEL=error
 
-# staging
+# env=staging
 # API_URL=https://api.staging.com
 # DEBUG=true
 # LOG_LEVEL=debug
+
+# env=development
+# API_URL=http://localhost:3000
+# DEBUG=true
+# LOG_LEVEL=debug
+# MOCK_DATA=true
+
+# Sanity env=staging
+# SANITY_DATASET=staging
+# SANITY_PROJECT_ID=staging123
+
+# Sanity env=production
+SANITY_DATASET=production
+SANITY_PROJECT_ID=prod456
+
+# Variables below this blank line are never modified
+SHARED_CONFIG=always_active
+GLOBAL_TIMEOUT=30
 ```
 
 After switching to **staging**:
@@ -42,15 +63,33 @@ After switching to **staging**:
 DATABASE_URL=postgres://localhost:5432/myapp
 API_VERSION=v1
 
-# production
+# env=production
 # API_URL=https://api.production.com
 # DEBUG=false
 # LOG_LEVEL=error
 
-# staging
+# env=staging
 API_URL=https://api.staging.com
 DEBUG=true
 LOG_LEVEL=debug
+
+# env=development
+# API_URL=http://localhost:3000
+# DEBUG=true
+# LOG_LEVEL=debug
+# MOCK_DATA=true
+
+# Sanity env=staging
+SANITY_DATASET=staging
+SANITY_PROJECT_ID=staging123
+
+# Sanity env=production
+# SANITY_DATASET=production
+# SANITY_PROJECT_ID=prod456
+
+# Variables below this blank line are never modified
+SHARED_CONFIG=always_active
+GLOBAL_TIMEOUT=30
 ```
 
 ## Installation
@@ -66,19 +105,17 @@ LOG_LEVEL=debug
 
 1. Open your `.env` file
 2. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-3. Type "Environment Switcher" or "Env Switcher"
-4. Select either:
-   - **Switch to Production Environment**
-   - **Switch to Staging Environment**
+3. Type "Change Environment" or "Env Switcher"
+4. Select **Change Environment**
+5. Choose your desired environment from the list
 
-### Keyboard Shortcuts
+### Keyboard Shortcut
 
-- **Switch to Staging**: `Ctrl+Shift+E S` (Windows/Linux) or `Cmd+Shift+E S` (Mac)
-- **Switch to Production**: `Ctrl+Shift+E P` (Windows/Linux) or `Cmd+Shift+E P` (Mac)
+- **Change Environment**: `Alt+Ctrl+E` (Windows/Linux) or `Alt+Cmd+E` (Mac)
 
 ### Context Menu
 
-Right-click in any `.env` file to access the Environment Switcher submenu with both switching options.
+Right-click in any `.env` file to access **Change Environment** directly from the context menu.
 
 ## File Format Support
 
@@ -91,42 +128,125 @@ The extension works with:
 
 ## Environment Section Format
 
-To use the environment switcher, structure your `.env` file with clear environment markers:
+To use the environment switcher, structure your `.env` file with the `# env=<name>` syntax:
 
-1. **Section Headers**: Use comments like `# production` or `# staging`
-2. **Environment Variables**: Place your environment-specific variables below each header
-3. **Separation**: Use blank lines to separate different environment sections
+### Basic Format
 
 ```env
-# Global/shared variables
-SHARED_VAR=value
-
-# production
+# env=production
 PROD_API=https://prod.api.com
 PROD_DEBUG=false
 
-# staging
+# env=staging
 STAGING_API=https://staging.api.com
 STAGING_DEBUG=true
 ```
 
+### Advanced Features
+
+#### Multiple Blocks Per Environment
+
+You can have multiple blocks for the same environment:
+
+```env
+# API env=production
+API_URL=https://api.prod.com
+API_KEY=prod123
+
+# Database env=production
+DB_HOST=prod.db.com
+DB_NAME=prod_db
+
+# API env=staging
+# API_URL=https://api.staging.com
+# API_KEY=staging123
+
+# Database env=staging
+# DB_HOST=staging.db.com
+# DB_NAME=staging_db
+```
+
+#### Scope Boundaries
+
+Blank lines terminate environment scope - variables after blank lines are never modified:
+
+```env
+# env=production
+PROD_VAR=value
+
+# env=staging
+# STAGING_VAR=value
+
+# These variables are always active (never commented/uncommented)
+SHARED_SECRET=always_active
+GLOBAL_CONFIG=persistent
+```
+
+#### Custom Environment Names
+
+Use any environment names you need:
+
+```env
+# env=development
+# env=testing
+# env=staging
+# env=production
+# env=local
+# env=demo
+```
+
 ## Commands
 
-| Command                          | Description                      | Keybinding (Win/Linux) | Keybinding (Mac) |
-| -------------------------------- | -------------------------------- | ---------------------- | ---------------- |
-| `envSwitcher.switchToStaging`    | Switch to staging environment    | `Ctrl+Shift+E S`       | `Cmd+Shift+E S`  |
-| `envSwitcher.switchToProduction` | Switch to production environment | `Ctrl+Shift+E P`       | `Cmd+Shift+E P`  |
+| Command                         | Description                        | Keybinding (Win/Linux) | Keybinding (Mac) |
+| ------------------------------- | ---------------------------------- | ---------------------- | ---------------- |
+| `envSwitcher.changeEnvironment` | Open environment picker and switch | `ALT+Ctrl+E`           | `ALT+Cmd+E`      |
+
+## Environment Picker
+
+When you run the **Change Environment** command, you'll see a picker showing:
+
+- **Environment Name**: The name of each detected environment
+- **Block Count**: How many blocks exist for this environment
+- **Line Count**: Total lines across all blocks for this environment
+
+Example picker display:
+
+```
+production    2 block(s), 8 lines
+staging       2 block(s), 6 lines
+development   1 block(s), 4 lines
+```
 
 ## Requirements
 
 - VS Code 1.96.2 or higher
-- `.env` files with properly formatted environment sections
+- `.env` files with properly formatted environment sections using `# env=<name>` syntax
+
+## Key Features
+
+### ✅ Smart Parsing
+
+- Detects `# env=<name>` syntax with optional prefixes (e.g., `# API env=production`)
+- Supports unlimited custom environment names
+- Handles multiple blocks per environment
+
+### ✅ Scope Management
+
+- Blank lines terminate environment scope
+- Variables outside environment sections remain untouched
+- Preserves shared/global variables
+
+### ✅ Intelligent Switching
+
+- Comments out non-selected environments
+- Uncomments selected environment
+- Maintains proper formatting and indentation
 
 ## Known Issues
 
-- Environment sections must be clearly marked with comments containing "production" or "staging"
-- Variables outside of marked sections remain unchanged
-- Empty lines are used to separate environment sections
+- Environment sections must use the `# env=<name>` syntax
+- Blank lines are used as scope terminators
+- Only one environment can be active at a time
 
 ## Contributing
 
@@ -136,12 +256,13 @@ Found a bug or have a feature request? Please open an issue on the [GitHub repos
 
 ### 0.0.1
 
-- Initial release
-- Basic environment switching functionality
-- Command palette integration
-- Keyboard shortcuts
-- Context menu support
+- Single command interface with environment picker
+- Support for unlimited custom environments
+- Multiple blocks per environment support
+- Blank line scope termination
+- Dynamic environment detection
+- Interactive environment selection
 
 ---
 
-**Enjoy seamless environment switching!** 🚀
+**Enjoy seamless environment switching across all your environments!** 🚀
