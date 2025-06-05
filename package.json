@@ -1,0 +1,90 @@
+{
+  "name": "env-switcher",
+  "displayName": "Env switcher",
+  "description": "Quickly switch between production and staging environments in your .env files",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.96.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "envSwitcher.switchToStaging",
+        "title": "Switch to Staging Environment",
+        "category": "Env Switcher"
+      },
+      {
+        "command": "envSwitcher.switchToProduction",
+        "title": "Switch to Production Environment",
+        "category": "Env Switcher"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "envSwitcher.switchToStaging",
+          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini"
+        },
+        {
+          "command": "envSwitcher.switchToProduction",
+          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "envSwitcher.submenu",
+          "when": "editorLangId == dotenv || resourceExtname == .env || editorLangId == ini",
+          "group": "navigation"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "envSwitcher.submenu",
+        "label": "Environment Switcher"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "envSwitcher.switchToStaging",
+        "key": "ctrl+shift+e s",
+        "mac": "cmd+shift+e s",
+        "when": "editorLangId == dotenv || resourceExtname == .env.local || editorLangId == ini"
+      },
+      {
+        "command": "envSwitcher.switchToProduction",
+        "key": "ctrl+shift+e p",
+        "mac": "cmd+shift+e p",
+        "when": "editorLangId == dotenv || resourceExtname == .env.local || editorLangId == ini"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.96.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2"
+  },
+  "packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+  "vsce": {
+    "dependencies": false
+  }
+}
