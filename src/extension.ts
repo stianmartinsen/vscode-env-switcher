@@ -79,7 +79,7 @@ function parseEnvironments(content: string): EnvironmentSection[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const envMatch = line.match(/^#\s*.*env\s*=\s*(.+)$/i);
+    const envMatch = line.match(/^#\s*.*\senv\s*=\s*(.+)$/i);
 
     if (envMatch) {
       // Save the previous environment if it exists
@@ -138,7 +138,7 @@ async function switchToEnvironment(
       const line = lines[i];
 
       // Skip environment header comments
-      if (line.match(/^#\s*.*env\s*=\s*(.+)$/i)) {
+      if (line.match(/^#\s*.*\senv\s*=\s*(.+)$/i)) {
         continue;
       }
 
@@ -151,7 +151,7 @@ async function switchToEnvironment(
         // This line belongs to an environment section
         if (envSection.name === targetEnv) {
           // This is the target environment - uncomment if commented
-          if (line.startsWith("#") && !line.match(/^#\s*.*env\s*=/i)) {
+          if (line.startsWith("#") && !line.match(/^#\s*.*\senv\s*=/i)) {
             lines[i] = line.replace(/^#\s*/, "");
           }
         } else {
