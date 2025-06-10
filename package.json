@@ -1,14 +1,20 @@
 {
-  "name": "env-switcher",
-  "displayName": "Env switcher",
-  "description": "Quickly switch between production and staging environments in your .env files",
-  "version": "0.0.1",
+  "name": "envswitcher",
+  "displayName": "Environment Switcher",
+  "description": "Quickly switch between multiple environments in your .env files",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.96.2"
   },
   "author": {
     "name": "Stian Martinsen"
   },
+  "repository": "https://github.com/stianmartinsen/vscode-env-switcher",
+  "homepage": "https://github.com/stianmartinsen/vscode-env-switcher",
+  "bugs": "https://github.com/stianmartinsen/vscode-env-switcher/issues",
+  "license": "MIT",
+  "publisher": "StianMartinsen",
+  "icon": "./icon.png",
   "categories": [
     "Other"
   ],

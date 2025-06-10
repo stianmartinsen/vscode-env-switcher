@@ -250,9 +250,14 @@ development   1 block(s), 4 lines
 
 ## Contributing
 
-Found a bug or have a feature request? Please open an issue on the [GitHub repository](https://github.com/your-username/env-switcher).
+Found a bug or have a feature request? Please open an issue on the [GitHub repository](https://github.com/stianmartinsen/vscode-env-switcher).
 
 ## Release Notes
+
+### 0.0.2
+
+- Add icon
+- Update readme
 
 ### 0.0.1
 
